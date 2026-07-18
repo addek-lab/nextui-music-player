@@ -102,7 +102,7 @@ MBEDTLS_OBJS = $(patsubst %.c,$(MBEDTLS_OBJ_DIR)/%.o,$(MBEDTLS_SRC))
 ###########################################################
 # Main application sources
 
-APP_SRC = \
+LOCAL_SRC = \
     musicplayer.c player.c playlist.c playlist_m3u.c \
     radio.c radio_net.c album_art.c lyrics.c radio_hls.c radio_curated.c \
     downloader.c selfupdate.c display_helper.c \
@@ -118,12 +118,25 @@ APP_SRC = \
     spectrum.c \
     audio/kiss_fft.c audio/kiss_fftr.c \
     include/yxml/yxml.c \
-    include/parson/parson.c \
+    include/parson/parson.c
+
+# Sources that live outside src/ (shared NextUI code + per-platform code).
+# These need their own rule below: a plain $(OBJ_DIR)/%.o: %.c pattern would
+# reuse the same object/dep file across platforms, since the ../../ in the
+# source path collapses right back out of $(OBJ_DIR) (e.g. both
+# build/tg5040/obj/../../all/common/api.o and build/tg5050/obj/../../all/common/api.o
+# resolve to build/all/common/api.o). That caused stale objects compiled for
+# one platform's headers to get linked into the other platform's binary.
+EXT_SRC = \
     ../../all/common/utils.c ../../all/common/api.c \
     ../../all/common/config.c ../../all/common/scaler.c \
     ../../$(PLATFORM)/platform/platform.c
 
-APP_OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(APP_SRC))
+APP_SRC = $(LOCAL_SRC) $(EXT_SRC)
+
+LOCAL_OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(LOCAL_SRC))
+EXT_OBJS   = $(patsubst ../../%.c,$(OBJ_DIR)/ext/%.o,$(EXT_SRC))
+APP_OBJS = $(LOCAL_OBJS) $(EXT_OBJS)
 
 ###########################################################
 # Compiler / linker flags
@@ -169,6 +182,13 @@ $(LIBMBEDTLS): $(MBEDTLS_OBJS)
 
 # Compile main app sources
 $(OBJ_DIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) -c $(MY_CFLAGS) -o $@ $<
+
+# Compile sources that live outside src/ (see EXT_SRC above) into their own
+# per-platform subdirectory instead of $(OBJ_DIR)/%.o, so they can't collapse
+# to a path shared with another platform's build.
+$(OBJ_DIR)/ext/%.o: ../../%.c
 	@mkdir -p $(@D)
 	$(CC) -c $(MY_CFLAGS) -o $@ $<
 
