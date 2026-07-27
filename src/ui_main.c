@@ -622,7 +622,7 @@ void render_sleep_timer_overlay(SDL_Surface* screen) {
     
     SDL_Surface* txt = TTF_RenderUTF8_Blended(Fonts_getSmall(), buf, COLOR_WHITE);
     if (txt) {
-        SDL_Rect rect = {screen->w - txt->w - SCALE1(10), SCALE1(10), txt->w, txt->h};
+        SDL_Rect rect = {(screen->w - txt->w) / 2, SCALE1(10), txt->w, txt->h};
         SDL_BlitSurface(txt, NULL, screen, &rect);
         SDL_FreeSurface(txt);
     }

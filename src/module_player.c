@@ -578,6 +578,7 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen, bool now_playing_entry) {
     while (1) {
         GFX_startFrame();
         PAD_poll();
+        ModuleCommon_updateSleepTimer();
 
         // Handle add-to-playlist dialog overlay
         if (AddToPlaylist_isActive()) {
@@ -651,7 +652,6 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen, bool now_playing_entry) {
         }
 
         // Handle power management
-        ModuleCommon_updateSleepTimer();
         if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
             ModuleCommon_PWR_update(&dirty, &show_setting);
         }
@@ -778,6 +778,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
     while (1) {
         GFX_startFrame();
         PAD_poll();
+        ModuleCommon_updateSleepTimer();
 
         // Handle add-to-playlist dialog overlay
         if (AddToPlaylist_isActive()) {
@@ -1001,7 +1002,6 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
         }
 
         // Handle power management
-        ModuleCommon_updateSleepTimer();
         if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
             ModuleCommon_PWR_update(&dirty, &show_setting);
         }
@@ -1093,6 +1093,7 @@ ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* 
         while (1) {
             GFX_startFrame();
             PAD_poll();
+            ModuleCommon_updateSleepTimer();
 
             // Handle add-to-playlist dialog overlay
             if (AddToPlaylist_isActive()) {
@@ -1143,7 +1144,6 @@ ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* 
             }
 
             // Handle power management
-            ModuleCommon_updateSleepTimer();
             if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
                 ModuleCommon_PWR_update(&dirty, &show_setting);
             }

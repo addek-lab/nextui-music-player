@@ -139,6 +139,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
     while (1) {
         GFX_startFrame();
         PAD_poll();
+        ModuleCommon_updateSleepTimer();
 
         // Handle confirmation dialog
         if (show_confirm) {
@@ -563,7 +564,6 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
         }
 
         // Handle power management
-        ModuleCommon_updateSleepTimer();
         if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
             ModuleCommon_PWR_update(&dirty, &show_setting);
         }
