@@ -317,6 +317,8 @@ void render_playing(SDL_Surface* screen, int show_setting, BrowserContext* brows
             SDL_FreeSurface(lyric_surf);
         }
     }
+
+    render_sleep_timer_overlay(screen);
 }
 
 // Check if browser list has active scrolling (for refresh optimization)
