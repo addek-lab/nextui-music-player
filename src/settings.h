@@ -25,6 +25,15 @@ void Settings_cycleScreenOffPrev(void);  // 60 -> Off -> 120 -> 90 -> 60
 // Returns: "60s", "90s", "120s", or "Off"
 const char* Settings_getScreenOffDisplayStr(void);
 
+// Sleep timer setting (runtime only, in minutes)
+// Values: 0 (off), 15, 30, 45, 60, 90, 120
+#include <time.h>
+time_t Settings_getSleepTimerEnd(void);
+void Settings_setSleepTimerMinutes(int minutes);
+void Settings_cycleSleepTimerNext(void);
+void Settings_cycleSleepTimerPrev(void);
+const char* Settings_getSleepTimerDisplayStr(void);
+
 // Lyrics enabled setting
 bool Settings_getLyricsEnabled(void);
 void Settings_setLyricsEnabled(bool enabled);

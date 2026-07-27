@@ -13,12 +13,13 @@
 
 // Settings menu items
 #define SETTINGS_ITEM_SCREEN_OFF    0
-#define SETTINGS_ITEM_BASS_FILTER   1
-#define SETTINGS_ITEM_SOFT_LIMITER  2
-#define SETTINGS_ITEM_CLEAR_CACHE   3
-#define SETTINGS_ITEM_UPDATE_YTDLP  4
-#define SETTINGS_ITEM_ABOUT         5
-#define SETTINGS_ITEM_COUNT         6
+#define SETTINGS_ITEM_SLEEP_TIMER   1
+#define SETTINGS_ITEM_BASS_FILTER   2
+#define SETTINGS_ITEM_SOFT_LIMITER  3
+#define SETTINGS_ITEM_CLEAR_CACHE   4
+#define SETTINGS_ITEM_UPDATE_YTDLP  5
+#define SETTINGS_ITEM_ABOUT         6
+#define SETTINGS_ITEM_COUNT         7
 
 // Format cache size as human-readable string
 static void format_cache_size(long bytes, char* buf, int buf_size) {
@@ -60,6 +61,10 @@ void render_settings_menu(SDL_Surface* screen, int show_setting, int menu_select
             case SETTINGS_ITEM_SCREEN_OFF:
                 label = "Auto Screen Off";
                 value_str = Settings_getScreenOffDisplayStr();
+                break;
+            case SETTINGS_ITEM_SLEEP_TIMER:
+                label = "Sleep Timer";
+                value_str = Settings_getSleepTimerDisplayStr();
                 break;
             case SETTINGS_ITEM_BASS_FILTER:
                 label = "Bass Filter";

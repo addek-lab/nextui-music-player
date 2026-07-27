@@ -32,6 +32,12 @@ static struct {
     int soft_limiter_index;  // 0=off, 1=mild, 2=medium, 3=strong
 } current_settings;
 
+// Sleep timer (runtime only, not saved)
+static const int sleep_timer_values[] = {0, 15, 30, 45, 60, 90, 120};
+#define SLEEP_TIMER_VALUE_COUNT 7
+static int current_sleep_timer_index = 0;
+static time_t sleep_timer_end = 0;
+
 // Find index of current screen off value in the values array
 static int get_screen_off_index(void) {
     for (int i = 0; i < SCREEN_OFF_VALUE_COUNT; i++) {
@@ -153,6 +159,57 @@ void Settings_save(void) {
     fprintf(f, "bass_filter_hz=%d\n", current_settings.bass_filter_hz);
     fprintf(f, "soft_limiter=%d\n", current_settings.soft_limiter_index);
     fclose(f);
+}
+
+// Sleep timer
+time_t Settings_getSleepTimerEnd(void) {
+    return sleep_timer_end;
+}
+
+void Settings_setSleepTimerMinutes(int minutes) {
+    for (int i = 0; i < SLEEP_TIMER_VALUE_COUNT; i++) {
+        if (sleep_timer_values[i] == minutes) {
+            current_sleep_timer_index = i;
+            if (minutes == 0) {
+                sleep_timer_end = 0;
+            } else {
+                sleep_timer_end = time(NULL) + (minutes * 60);
+            }
+            return;
+        }
+    }
+}
+
+void Settings_cycleSleepTimerNext(void) {
+    current_sleep_timer_index = (current_sleep_timer_index + 1) % SLEEP_TIMER_VALUE_COUNT;
+    int mins = sleep_timer_values[current_sleep_timer_index];
+    if (mins == 0) {
+        sleep_timer_end = 0;
+    } else {
+        sleep_timer_end = time(NULL) + (mins * 60);
+    }
+}
+
+void Settings_cycleSleepTimerPrev(void) {
+    current_sleep_timer_index = (current_sleep_timer_index - 1 + SLEEP_TIMER_VALUE_COUNT) % SLEEP_TIMER_VALUE_COUNT;
+    int mins = sleep_timer_values[current_sleep_timer_index];
+    if (mins == 0) {
+        sleep_timer_end = 0;
+    } else {
+        sleep_timer_end = time(NULL) + (mins * 60);
+    }
+}
+
+const char* Settings_getSleepTimerDisplayStr(void) {
+    int mins = sleep_timer_values[current_sleep_timer_index];
+    if (mins == 0) return "Off";
+    if (mins == 15) return "15m";
+    if (mins == 30) return "30m";
+    if (mins == 45) return "45m";
+    if (mins == 60) return "60m";
+    if (mins == 90) return "90m";
+    if (mins == 120) return "120m";
+    return "Off";
 }
 
 bool Settings_getLyricsEnabled(void) {

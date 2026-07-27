@@ -335,6 +335,19 @@ void ModuleCommon_PWR_update(int* dirty, int* show_setting) {
     }
 
     overlay_buttons_were_active = overlay_buttons_active;
+
+    // Check Sleep Timer
+    time_t sleep_end = Settings_getSleepTimerEnd();
+    if (sleep_end > 0 && time(NULL) >= sleep_end) {
+        // Sleep timer expired!
+        Settings_setSleepTimerMinutes(0); // clear it
+        
+        // Stop audio playback (this also saves resume state)
+        Background_stopAll();
+        
+        // Put device into deep sleep / suspend
+        system("sync; echo mem > /sys/power/state");
+    }
 }
 
 bool ModuleCommon_handleHIDVolume(USBHIDEvent hid_event) {

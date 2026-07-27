@@ -75,6 +75,9 @@ ModuleExitReason SettingsModule_run(SDL_Surface* screen) {
                     if (menu_selected == SETTINGS_ITEM_SCREEN_OFF) {
                         Settings_cycleScreenOffPrev();
                         dirty = 1;
+                    } else if (menu_selected == SETTINGS_ITEM_SLEEP_TIMER) {
+                        Settings_cycleSleepTimerPrev();
+                        dirty = 1;
                     } else if (menu_selected == SETTINGS_ITEM_BASS_FILTER) {
                         Settings_cycleBassFilterPrev();
                         dirty = 1;
@@ -90,6 +93,9 @@ ModuleExitReason SettingsModule_run(SDL_Surface* screen) {
                 else if (PAD_justPressed(BTN_RIGHT)) {
                     if (menu_selected == SETTINGS_ITEM_SCREEN_OFF) {
                         Settings_cycleScreenOffNext();
+                        dirty = 1;
+                    } else if (menu_selected == SETTINGS_ITEM_SLEEP_TIMER) {
+                        Settings_cycleSleepTimerNext();
                         dirty = 1;
                     } else if (menu_selected == SETTINGS_ITEM_BASS_FILTER) {
                         Settings_cycleBassFilterNext();
@@ -109,6 +115,10 @@ ModuleExitReason SettingsModule_run(SDL_Surface* screen) {
                         case SETTINGS_ITEM_SCREEN_OFF:
                             // A also cycles the value (convenience)
                             Settings_cycleScreenOffNext();
+                            dirty = 1;
+                            break;
+                        case SETTINGS_ITEM_SLEEP_TIMER:
+                            Settings_cycleSleepTimerNext();
                             dirty = 1;
                             break;
                         case SETTINGS_ITEM_BASS_FILTER:
