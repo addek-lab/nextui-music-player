@@ -336,7 +336,9 @@ void ModuleCommon_PWR_update(int* dirty, int* show_setting) {
     }
 
     overlay_buttons_were_active = overlay_buttons_active;
+}
 
+void ModuleCommon_updateSleepTimer(void) {
     // Check Sleep Timer
     time_t sleep_end = Settings_getSleepTimerEnd();
     if (sleep_end > 0 && time(NULL) >= sleep_end) {

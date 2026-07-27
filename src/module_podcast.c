@@ -15,6 +15,8 @@
 #include "ui_main.h"
 #include "ui_utils.h"
 #include "wifi.h"
+#include "resume.h"
+#include "settings.h"
 #include "background.h"
 
 // Internal states
@@ -944,10 +946,13 @@ ModuleExitReason PodcastModule_run(SDL_Surface* screen) {
                         PAD_justPressed(BTN_L2) || PAD_justPressed(BTN_R2))) {
                         
                         if (PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_L2)) {
-                            PodcastModule_seekBackward();
+                            int pos_ms = Player_getPosition();
+                            Player_seek(pos_ms - 15000 < 0 ? 0 : pos_ms - 15000);
                             dirty = 1;
                         } else if (PAD_justPressed(BTN_R1) || PAD_justPressed(BTN_R2)) {
-                            PodcastModule_seekForward();
+                            int pos_ms = Player_getPosition();
+                            int dur_ms = Player_getDuration();
+                            Player_seek(pos_ms + 15000 > dur_ms ? dur_ms : pos_ms + 15000);
                             dirty = 1;
                         }
                     } else {

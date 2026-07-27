@@ -12,6 +12,8 @@
 #include "module_menu.h"
 #include "resume.h"
 #include "background.h"
+#include "settings.h"
+#include <time.h>
 
 // Menu items variants (first entry is mutable for Resume/Now Playing swap)
 static const char* menu_items_with_first[] = {"Resume", "Library", "Online Radio", "Podcasts", "Settings"};
@@ -598,5 +600,30 @@ void render_screen_off_hint(SDL_Surface* screen) {
     if (msg_surf) {
         SDL_BlitSurface(msg_surf, NULL, screen, &(SDL_Rect){(hw - msg_surf->w) / 2, (hh - msg_surf->h) / 2});
         SDL_FreeSurface(msg_surf);
+    }
+    
+    // Also render sleep timer if active
+    render_sleep_timer_overlay(screen);
+}
+
+void render_sleep_timer_overlay(SDL_Surface* screen) {
+    time_t end = Settings_getSleepTimerEnd();
+    if (end == 0) return;
+    
+    time_t now = time(NULL);
+    if (now >= end) return;
+    
+    int remaining = end - now;
+    int mins = remaining / 60;
+    int secs = remaining % 60;
+    
+    char buf[16];
+    snprintf(buf, sizeof(buf), "ZZZ %d:%02d", mins, secs);
+    
+    SDL_Surface* txt = TTF_RenderUTF8_Blended(Fonts_getSmall(), buf, COLOR_WHITE);
+    if (txt) {
+        SDL_Rect rect = {screen->w - txt->w - SCALE1(10), SCALE1(10), txt->w, txt->h};
+        SDL_BlitSurface(txt, NULL, screen, &rect);
+        SDL_FreeSurface(txt);
     }
 }

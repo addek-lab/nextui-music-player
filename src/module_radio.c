@@ -17,6 +17,7 @@
 #include "ui_main.h"
 #include "ui_utils.h"
 #include "wifi.h"
+#include "settings.h"
 #include "background.h"
 
 // Internal states

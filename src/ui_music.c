@@ -5,6 +5,7 @@
 #include "api.h"
 #include "ui_music.h"
 #include "ui_fonts.h"
+#include "ui_main.h"
 #include "ui_icons.h"
 #include "ui_utils.h"
 #include "ui_album_art.h"
@@ -533,4 +534,7 @@ void Lyrics_renderGPU(void) {
 
     if (cur_surf) SDL_FreeSurface(cur_surf);
     if (next_surf) SDL_FreeSurface(next_surf);
+
+    // Sleep timer overlay
+    render_sleep_timer_overlay(screen);
 }

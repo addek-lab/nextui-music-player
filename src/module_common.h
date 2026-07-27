@@ -70,6 +70,8 @@ void ModuleCommon_quit(void);
 // Call this instead of PWR_update directly in modules
 void ModuleCommon_PWR_update(int* dirty, int* show_setting);
 
+void ModuleCommon_updateSleepTimer(void);
+
 // Handle a single HID volume event. Returns true if the event was a volume event.
 bool ModuleCommon_handleHIDVolume(USBHIDEvent hid_event);
 
