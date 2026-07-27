@@ -536,7 +536,4 @@ void Lyrics_renderGPU(void) {
 
     if (cur_surf) SDL_FreeSurface(cur_surf);
     if (next_surf) SDL_FreeSurface(next_surf);
-
-    // Sleep timer overlay
-    render_sleep_timer_overlay(screen);
 }
