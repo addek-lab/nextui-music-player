@@ -40,6 +40,7 @@ A comprehensive music playback application for NextUI featuring local file playb
 ### General
 - Support Bluetooth/USB-C devices for output and media controls.
 - Automatic screen off (Follow system screen timeout).
+- Sleep timer with automatic device suspension (tracks accurately even in lockscreen mode).
 
 ### Library
 - Supports `WAV`, `MP3`, `OGG`, `FLAC`, `M4A`, `AAC` and `OPUS` formats
