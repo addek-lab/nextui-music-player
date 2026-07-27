@@ -23,12 +23,13 @@ typedef enum {
 
 // Settings menu items
 #define SETTINGS_ITEM_SCREEN_OFF    0
-#define SETTINGS_ITEM_BASS_FILTER   1
-#define SETTINGS_ITEM_SOFT_LIMITER  2
-#define SETTINGS_ITEM_CLEAR_CACHE   3
-#define SETTINGS_ITEM_UPDATE_YTDLP  4
-#define SETTINGS_ITEM_ABOUT         5
-#define SETTINGS_ITEM_COUNT         6
+#define SETTINGS_ITEM_SLEEP_TIMER   1
+#define SETTINGS_ITEM_BASS_FILTER   2
+#define SETTINGS_ITEM_SOFT_LIMITER  3
+#define SETTINGS_ITEM_CLEAR_CACHE   4
+#define SETTINGS_ITEM_UPDATE_YTDLP  5
+#define SETTINGS_ITEM_ABOUT         6
+#define SETTINGS_ITEM_COUNT         7
 
 // Internal app state constants for controls help
 // These match the pattern used in ui_main.c
