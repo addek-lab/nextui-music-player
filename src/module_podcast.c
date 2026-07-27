@@ -936,7 +936,26 @@ ModuleExitReason PodcastModule_run(SDL_Surface* screen) {
                 Podcast_update();
 
                 // Any button -> show hint
+                bool wake_screen = false;
                 if (PAD_anyPressed()) {
+                    if (Settings_getLockscreenControls() && 
+                       (PAD_justPressed(BTN_PLUS) || PAD_justPressed(BTN_MINUS) ||
+                        PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_R1) ||
+                        PAD_justPressed(BTN_L2) || PAD_justPressed(BTN_R2))) {
+                        
+                        if (PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_L2)) {
+                            PodcastModule_seekBackward();
+                            dirty = 1;
+                        } else if (PAD_justPressed(BTN_R1) || PAD_justPressed(BTN_R2)) {
+                            PodcastModule_seekForward();
+                            dirty = 1;
+                        }
+                    } else {
+                        wake_screen = true;
+                    }
+                }
+
+                if (wake_screen) {
                     screen_off = false;
                     PLAT_enableBacklight(1);
                     ModuleCommon_startScreenOffHint();
@@ -1073,6 +1092,7 @@ ModuleExitReason PodcastModule_run(SDL_Surface* screen) {
         }
 
         // Handle power management
+        ModuleCommon_updateSleepTimer();
         if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
             ModuleCommon_PWR_update(&dirty, &show_setting);
         }

@@ -302,7 +302,37 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
                 Radio_update();
 
                 // Any button -> show hint
+                bool wake_screen = false;
                 if (PAD_anyPressed()) {
+                    if (Settings_getLockscreenControls() && 
+                       (PAD_justPressed(BTN_PLUS) || PAD_justPressed(BTN_MINUS) ||
+                        PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_R1) ||
+                        PAD_justPressed(BTN_L2) || PAD_justPressed(BTN_R2))) {
+                        
+                        RadioStation* stations;
+                        int station_count = Radio_getStations(&stations);
+                        
+                        if (PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_L2)) {
+                            if (station_count > 1) {
+                                radio_selected = (radio_selected - 1 + station_count) % station_count;
+                                Radio_stop();
+                                Radio_play(stations[radio_selected].url);
+                                dirty = 1;
+                            }
+                        } else if (PAD_justPressed(BTN_R1) || PAD_justPressed(BTN_R2)) {
+                            if (station_count > 1) {
+                                radio_selected = (radio_selected + 1) % station_count;
+                                Radio_stop();
+                                Radio_play(stations[radio_selected].url);
+                                dirty = 1;
+                            }
+                        }
+                    } else {
+                        wake_screen = true;
+                    }
+                }
+
+                if (wake_screen) {
                     screen_off = false;
                     PLAT_enableBacklight(1);
                     ModuleCommon_startScreenOffHint();
@@ -532,6 +562,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
         }
 
         // Handle power management
+        ModuleCommon_updateSleepTimer();
         if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
             ModuleCommon_PWR_update(&dirty, &show_setting);
         }

@@ -39,6 +39,10 @@ bool Settings_getLyricsEnabled(void);
 void Settings_setLyricsEnabled(bool enabled);
 void Settings_toggleLyrics(void);
 
+// Lockscreen Controls setting
+bool Settings_getLockscreenControls(void);
+void Settings_toggleLockscreenControls(void);
+
 // Speaker bass filter (high-pass cutoff in Hz, 0 = off)
 int Settings_getBassFilterHz(void);
 void Settings_cycleBassFilterNext(void);

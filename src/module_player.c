@@ -651,6 +651,7 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen, bool now_playing_entry) {
         }
 
         // Handle power management
+        ModuleCommon_updateSleepTimer();
         if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
             ModuleCommon_PWR_update(&dirty, &show_setting);
         }
@@ -839,7 +840,30 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
 
         // Handle screen off mode
         if (screen_off) {
+            bool wake_screen = false;
+            
             if (PAD_anyPressed()) {
+                if (Settings_getLockscreenControls() && 
+                   (PAD_justPressed(BTN_PLUS) || PAD_justPressed(BTN_MINUS) ||
+                    PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_R1) ||
+                    PAD_justPressed(BTN_L2) || PAD_justPressed(BTN_R2))) {
+                    
+                    // Allow specific controls without waking
+                    if (PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_L2)) {
+                        PlayerModule_prevTrack();
+                        dirty = 1;
+                    } else if (PAD_justPressed(BTN_R1) || PAD_justPressed(BTN_R2)) {
+                        PlayerModule_nextTrack();
+                        dirty = 1;
+                    }
+                    // Volume is handled by ModuleCommon_handleHardwareVolume()
+                } else {
+                    // Any other button wakes the screen
+                    wake_screen = true;
+                }
+            }
+
+            if (wake_screen) {
                 screen_off = false;
                 PLAT_enableBacklight(1);
                 ModuleCommon_startScreenOffHint();
@@ -977,6 +1001,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
         }
 
         // Handle power management
+        ModuleCommon_updateSleepTimer();
         if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
             ModuleCommon_PWR_update(&dirty, &show_setting);
         }
@@ -1118,6 +1143,7 @@ ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* 
             }
 
             // Handle power management
+            ModuleCommon_updateSleepTimer();
             if (!screen_off && !ModuleCommon_isScreenOffHintActive()) {
                 ModuleCommon_PWR_update(&dirty, &show_setting);
             }
