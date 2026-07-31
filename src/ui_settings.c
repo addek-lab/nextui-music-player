@@ -17,10 +17,11 @@
 #define SETTINGS_ITEM_BASS_FILTER   2
 #define SETTINGS_ITEM_SOFT_LIMITER  3
 #define SETTINGS_ITEM_LOCKSCREEN_CONTROLS 4
-#define SETTINGS_ITEM_CLEAR_CACHE   5
-#define SETTINGS_ITEM_UPDATE_YTDLP  6
-#define SETTINGS_ITEM_ABOUT         7
-#define SETTINGS_ITEM_COUNT         8
+#define SETTINGS_ITEM_MINIMIZE_ON_EXIT    5
+#define SETTINGS_ITEM_CLEAR_CACHE   6
+#define SETTINGS_ITEM_UPDATE_YTDLP  7
+#define SETTINGS_ITEM_ABOUT         8
+#define SETTINGS_ITEM_COUNT         9
 
 // Format cache size as human-readable string
 static void format_cache_size(long bytes, char* buf, int buf_size) {
@@ -78,6 +79,10 @@ void render_settings_menu(SDL_Surface* screen, int show_setting, int menu_select
             case SETTINGS_ITEM_LOCKSCREEN_CONTROLS:
                 label = "Lockscreen Controls";
                 value_str = Settings_getLockscreenControls() ? "On" : "Off";
+                break;
+            case SETTINGS_ITEM_MINIMIZE_ON_EXIT:
+                label = "Play in Background on Exit";
+                value_str = Settings_getMinimizeOnExit() ? "On" : "Off";
                 break;
             case SETTINGS_ITEM_CLEAR_CACHE: {
                 long cache_size = album_art_get_cache_size();
@@ -192,6 +197,7 @@ void render_settings_menu(SDL_Surface* screen, int show_setting, int menu_select
         menu_selected == SETTINGS_ITEM_BASS_FILTER ||
         menu_selected == SETTINGS_ITEM_SOFT_LIMITER ||
         menu_selected == SETTINGS_ITEM_LOCKSCREEN_CONTROLS ||
+        menu_selected == SETTINGS_ITEM_MINIMIZE_ON_EXIT ||
         menu_selected == SETTINGS_ITEM_SLEEP_TIMER) {
         GFX_blitButtonGroup((char*[]){"B", "BACK", "LEFT/RIGHT", "CHANGE", NULL}, 1, screen, 1);
     } else {

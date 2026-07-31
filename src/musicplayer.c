@@ -50,13 +50,15 @@ static void sigHandler(int sig) {
 }
 
 int main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
+    bool daemon_mode = false;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--daemon") == 0) daemon_mode = true;
+    }
 
-    screen = GFX_init(MODE_MAIN);
-    PWR_pinToCores(CPU_CORE_PERFORMANCE);
-    // Load bundled fonts
-    Fonts_load();
+    if (!daemon_mode) {
+        screen = GFX_init(MODE_MAIN);
+        // Load bundled fonts
+        Fonts_load();
 
     // Show splash screen immediately while heavy subsystems initialize
     {
@@ -80,12 +82,16 @@ int main(int argc, char* argv[]) {
         GFX_flip(screen);
     }
 
+    PWR_pinToCores(CPU_CORE_PERFORMANCE);
+
     InitSettings();
-    PAD_init();
+    if (!daemon_mode) {
+        PAD_init();
+        Icons_init();
+    }
     PWR_init();
     WIFI_init();
     psa_crypto_init();
-    Icons_init();
 
     signal(SIGINT, sigHandler);
     signal(SIGTERM, sigHandler);
@@ -115,8 +121,10 @@ int main(int argc, char* argv[]) {
 	SetVolume(GetVolume());
 
     // Initialize self-update module
-    SelfUpdate_init(".");
-    SelfUpdate_checkForUpdate();
+    if (!daemon_mode) {
+        SelfUpdate_init(".");
+        SelfUpdate_checkForUpdate();
+    }
 
     // Initialize common module (global input handling)
     ModuleCommon_init();
@@ -127,8 +135,18 @@ int main(int argc, char* argv[]) {
     // Initialize resume state
     Resume_init();
 
-    // Initialize YouTube downloader (loads queue, auto-resumes pending downloads)
-    Downloader_init();
+    // Initialize YouTube downloader
+    if (!daemon_mode) {
+        Downloader_init();
+    }
+
+    if (daemon_mode) {
+        const ResumeState* rs = Resume_getState();
+        if (rs) {
+            PlayerModule_runDaemon(rs, &quit);
+        }
+        goto cleanup;
+    }
 
     // Main application loop
     while (!quit) {
@@ -195,19 +213,29 @@ int main(int argc, char* argv[]) {
     }
 
 cleanup:
+    // Determine exit code before Background_stopAll clears the playing state
+    int exit_code = EXIT_SUCCESS;
+    if (!daemon_mode && quit && Settings_getMinimizeOnExit() && Background_isPlaying()) {
+        exit_code = 42;
+    }
+
     Background_stopAll();
-    Downloader_cleanup();
+    if (!daemon_mode) Downloader_cleanup();
     Settings_quit();
     ModuleCommon_quit();
-    SelfUpdate_cleanup();
+    if (!daemon_mode) SelfUpdate_cleanup();
     Player_quit();
-    Icons_quit();
-    Fonts_unload();
+    if (!daemon_mode) {
+        Icons_quit();
+        Fonts_unload();
+    }
 
     QuitSettings();
     PWR_quit();
-    PAD_quit();
-    GFX_quit();
+    if (!daemon_mode) {
+        PAD_quit();
+        GFX_quit();
+    }
 
-    return EXIT_SUCCESS;
+    return exit_code;
 }

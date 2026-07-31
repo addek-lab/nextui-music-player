@@ -1236,3 +1236,63 @@ void PlayerModule_backgroundTick(void) {
         }
     }
 }
+
+void PlayerModule_runDaemon(const ResumeState* resume, bool* quit_flag) {
+    if (!resume) return;
+
+    if (resume->type == RESUME_TYPE_FILES) {
+        init_player();
+        load_directory(resume->folder_path);
+        nav_stack_top = 0;
+
+        Playlist_free(&playlist);
+        int count = Playlist_buildFromDirectory(&playlist, resume->folder_path, resume->track_path);
+        if (count <= 0) return;
+        playlist_active = true;
+
+        const PlaylistTrack* track = Playlist_getCurrentTrack(&playlist);
+        if (!track || !start_playback(track->path)) {
+            cleanup_playback(false);
+            return;
+        }
+
+        if (resume->position_ms > 0) {
+            Player_seek(resume->position_ms);
+        }
+
+    } else if (resume->type == RESUME_TYPE_PLAYLIST) {
+        init_player();
+        load_directory(MUSIC_PATH);
+        nav_stack_top = 0;
+        
+        Playlist_free(&playlist);
+        int count = Playlist_loadM3U(&playlist, resume->playlist_path);
+        if (count <= 0) return;
+        playlist_active = true;
+
+        Playlist_setCurrentTrackPath(&playlist, resume->track_path);
+        const PlaylistTrack* track = Playlist_getCurrentTrack(&playlist);
+        if (!track || !start_playback(track->path)) {
+            cleanup_playback(false);
+            return;
+        }
+
+        if (resume->position_ms > 0) {
+            Player_seek(resume->position_ms);
+        }
+    } else {
+        return;
+    }
+
+    Background_setActive(BG_MUSIC);
+    
+    while (quit_flag && !(*quit_flag)) {
+        PlayerModule_backgroundTick();
+        ModuleCommon_updateSleepTimer();
+        usleep(100000); // 100ms
+        
+        if (Player_getState() == PLAYER_STATE_STOPPED && Background_getActive() == BG_NONE) {
+            break;
+        }
+    }
+}

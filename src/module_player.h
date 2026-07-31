@@ -25,6 +25,9 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
 // Run player with resume state (restores folder/playlist, seeks to position)
 ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* resume);
 
+// Run player in headless daemon mode
+void PlayerModule_runDaemon(const ResumeState* resume, bool* quit_flag);
+
 // Set the M3U playlist path for resume tracking (call before runWithPlaylist)
 void PlayerModule_setResumePlaylistPath(const char* m3u_path);
 

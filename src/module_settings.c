@@ -27,10 +27,11 @@ typedef enum {
 #define SETTINGS_ITEM_BASS_FILTER   2
 #define SETTINGS_ITEM_SOFT_LIMITER  3
 #define SETTINGS_ITEM_LOCKSCREEN_CONTROLS 4
-#define SETTINGS_ITEM_CLEAR_CACHE   5
-#define SETTINGS_ITEM_UPDATE_YTDLP  6
-#define SETTINGS_ITEM_ABOUT         7
-#define SETTINGS_ITEM_COUNT         8
+#define SETTINGS_ITEM_MINIMIZE_ON_EXIT    5
+#define SETTINGS_ITEM_CLEAR_CACHE   6
+#define SETTINGS_ITEM_UPDATE_YTDLP  7
+#define SETTINGS_ITEM_ABOUT         8
+#define SETTINGS_ITEM_COUNT         9
 
 // Internal app state constants for controls help
 // These match the pattern used in ui_main.c
@@ -89,6 +90,9 @@ ModuleExitReason SettingsModule_run(SDL_Surface* screen) {
                     } else if (menu_selected == SETTINGS_ITEM_LOCKSCREEN_CONTROLS) {
                         Settings_toggleLockscreenControls();
                         dirty = 1;
+                    } else if (menu_selected == SETTINGS_ITEM_MINIMIZE_ON_EXIT) {
+                        Settings_toggleMinimizeOnExit();
+                        dirty = 1;
                     } else {
                         int items_per_page = calc_list_layout(screen).items_per_page;
                         list_page_up(&menu_selected, &menu_scroll, SETTINGS_ITEM_COUNT, items_per_page);
@@ -110,6 +114,9 @@ ModuleExitReason SettingsModule_run(SDL_Surface* screen) {
                         dirty = 1;
                     } else if (menu_selected == SETTINGS_ITEM_LOCKSCREEN_CONTROLS) {
                         Settings_toggleLockscreenControls();
+                        dirty = 1;
+                    } else if (menu_selected == SETTINGS_ITEM_MINIMIZE_ON_EXIT) {
+                        Settings_toggleMinimizeOnExit();
                         dirty = 1;
                     } else {
                         int items_per_page = calc_list_layout(screen).items_per_page;
@@ -139,6 +146,10 @@ ModuleExitReason SettingsModule_run(SDL_Surface* screen) {
                             break;
                         case SETTINGS_ITEM_LOCKSCREEN_CONTROLS:
                             Settings_toggleLockscreenControls();
+                            dirty = 1;
+                            break;
+                        case SETTINGS_ITEM_MINIMIZE_ON_EXIT:
+                            Settings_toggleMinimizeOnExit();
                             dirty = 1;
                             break;
                         case SETTINGS_ITEM_CLEAR_CACHE:
