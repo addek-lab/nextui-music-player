@@ -1256,32 +1256,45 @@ void PlayerModule_runDaemon(const ResumeState* resume, bool* quit_flag) {
             return;
         }
 
-        if (resume->position_ms > 0) {
-            Player_seek(resume->position_ms);
+    } else if (resume->type == RESUME_TYPE_PLAYLIST) {
+        PlaylistTrack m3u_tracks[PLAYLIST_MAX_TRACKS];
+        int m3u_count = 0;
+        if (M3U_loadTracks(resume->playlist_path, m3u_tracks, PLAYLIST_MAX_TRACKS, &m3u_count) != 0 || m3u_count <= 0) {
+            return;
         }
 
-    } else if (resume->type == RESUME_TYPE_PLAYLIST) {
         init_player();
-        load_directory(MUSIC_PATH);
-        nav_stack_top = 0;
-        
         Playlist_free(&playlist);
-        int count = Playlist_loadM3U(&playlist, resume->playlist_path);
-        if (count <= 0) return;
-        playlist_active = true;
 
-        Playlist_setCurrentTrackPath(&playlist, resume->track_path);
+        playlist.tracks = (PlaylistTrack*)malloc(m3u_count * sizeof(PlaylistTrack));
+        if (playlist.tracks) {
+            memcpy(playlist.tracks, m3u_tracks, m3u_count * sizeof(PlaylistTrack));
+            playlist.track_count = m3u_count;
+        }
+
+        playlist_active = true;
+        int start_idx = 0;
+        for (int i = 0; i < m3u_count; i++) {
+            if (strcmp(m3u_tracks[i].path, resume->track_path) == 0) {
+                start_idx = i;
+                break;
+            }
+        }
+        Playlist_setCurrentIndex(&playlist, start_idx);
+
         const PlaylistTrack* track = Playlist_getCurrentTrack(&playlist);
         if (!track || !start_playback(track->path)) {
             cleanup_playback(false);
             return;
         }
 
-        if (resume->position_ms > 0) {
-            Player_seek(resume->position_ms);
-        }
+        PlayerModule_setResumePlaylistPath(resume->playlist_path);
     } else {
         return;
+    }
+
+    if (resume->position_ms > 0) {
+        Player_seek(resume->position_ms);
     }
 
     Background_setActive(BG_MUSIC);
