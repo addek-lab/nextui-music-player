@@ -81,6 +81,7 @@ int main(int argc, char* argv[]) {
         }
         GFX_flip(screen);
     }
+    }
 
     PWR_pinToCores(CPU_CORE_PERFORMANCE);
 
@@ -213,6 +214,7 @@ int main(int argc, char* argv[]) {
     }
 
 cleanup:
+    ; // Empty statement for label
     // Determine exit code before Background_stopAll clears the playing state
     int exit_code = EXIT_SUCCESS;
     if (!daemon_mode && quit && Settings_getMinimizeOnExit() && Background_isPlaying()) {
