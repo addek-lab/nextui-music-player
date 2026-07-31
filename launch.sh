@@ -37,5 +37,5 @@ EXIT_CODE=$?
 
 # If user selected Minimize to Background (exit code 42)
 if [ $EXIT_CODE -eq 42 ]; then
-	setsid "$DIR/bin/$PLATFORM/musicplayer.elf" --daemon > /dev/null 2>&1 &
+	"$DIR/bin/$PLATFORM/musicplayer.elf" --daemon > /dev/null 2>&1 &
 fi
