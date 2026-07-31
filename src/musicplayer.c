@@ -94,8 +94,13 @@ int main(int argc, char* argv[]) {
     WIFI_init();
     psa_crypto_init();
 
-    signal(SIGINT, sigHandler);
-    signal(SIGTERM, sigHandler);
+    if (daemon_mode) {
+        signal(SIGINT, SIG_IGN);
+        signal(SIGTERM, SIG_IGN);
+    } else {
+        signal(SIGINT, sigHandler);
+        signal(SIGTERM, sigHandler);
+    }
 
     // Seed random number generator for shuffle
     srand((unsigned int)time(NULL));
