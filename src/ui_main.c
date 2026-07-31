@@ -595,7 +595,7 @@ void render_screen_off_hint(SDL_Surface* screen) {
     SDL_FillRect(screen, NULL, RGB_BLACK);
 
     // Render hint message centered
-    const char* msg = "Press SELECT + A to wake screen";
+    const char* msg = "Press any button to unlock";
     SDL_Surface* msg_surf = TTF_RenderUTF8_Blended(Fonts_getMedium(), msg, COLOR_WHITE);
     if (msg_surf) {
         SDL_BlitSurface(msg_surf, NULL, screen, &(SDL_Rect){(hw - msg_surf->w) / 2, (hh - msg_surf->h) / 2});

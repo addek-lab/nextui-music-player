@@ -255,6 +255,26 @@ bool ModuleCommon_isScreenOffHintActive(void) {
     return screen_off_hint_active;
 }
 
+bool ModuleCommon_isAnyWakeButtonPressed(void) {
+    return PAD_isPressed(BTN_A) || PAD_isPressed(BTN_B) || PAD_isPressed(BTN_X) ||
+           PAD_isPressed(BTN_Y) || PAD_isPressed(BTN_START) || PAD_isPressed(BTN_SELECT) ||
+           PAD_isPressed(BTN_UP) || PAD_isPressed(BTN_DOWN) ||
+           PAD_isPressed(BTN_LEFT) || PAD_isPressed(BTN_RIGHT) ||
+           PAD_isPressed(BTN_L1) || PAD_isPressed(BTN_R1) || PAD_isPressed(BTN_L2) ||
+           PAD_isPressed(BTN_R2) || PAD_isPressed(BTN_L3) || PAD_isPressed(BTN_R3) ||
+           PAD_isPressed(BTN_MENU);
+}
+
+bool ModuleCommon_isAnyWakeButtonJustPressed(void) {
+    return PAD_justPressed(BTN_A) || PAD_justPressed(BTN_B) || PAD_justPressed(BTN_X) ||
+           PAD_justPressed(BTN_Y) || PAD_justPressed(BTN_START) || PAD_justPressed(BTN_SELECT) ||
+           PAD_justPressed(BTN_UP) || PAD_justPressed(BTN_DOWN) ||
+           PAD_justPressed(BTN_LEFT) || PAD_justPressed(BTN_RIGHT) ||
+           PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_R1) || PAD_justPressed(BTN_L2) ||
+           PAD_justPressed(BTN_R2) || PAD_justPressed(BTN_L3) || PAD_justPressed(BTN_R3) ||
+           PAD_justPressed(BTN_MENU);
+}
+
 void ModuleCommon_startScreenOffHint(void) {
     screen_off_hint_active = true;
     screen_off_hint_start = SDL_GetTicks();

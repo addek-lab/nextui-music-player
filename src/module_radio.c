@@ -276,15 +276,14 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
                 ModuleCommon_handleHardwareVolume();
                 Radio_update();
 
-                // SELECT+A during hint -> full wake
-                if (PAD_isPressed(BTN_SELECT) && PAD_isPressed(BTN_A)) {
+                if (ModuleCommon_isAnyWakeButtonJustPressed()) {
                     ModuleCommon_resetScreenOffHint();
                     ModuleCommon_recordInputTime();
                     dirty = 1;
                     continue;
                 } else {
                     // Any other button resets the hint timer
-                    if (PAD_anyPressed()) {
+                    if (ModuleCommon_isAnyWakeButtonPressed()) {
                         ModuleCommon_startScreenOffHint();
                     }
                     if (ModuleCommon_processScreenOffHintTimeout()) {
@@ -305,7 +304,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
 
                 // Any button -> show hint
                 bool wake_screen = false;
-                if (PAD_anyPressed()) {
+                if (ModuleCommon_isAnyWakeButtonPressed()) {
                     if (Settings_getLockscreenControls() && 
                        (PAD_justPressed(BTN_PLUS) || PAD_justPressed(BTN_MINUS) ||
                         PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_R1) ||
@@ -347,7 +346,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
             }
 
             // Reset input timer on any button press
-            if (PAD_anyPressed()) {
+            if (ModuleCommon_isAnyWakeButtonPressed()) {
                 ModuleCommon_recordInputTime();
             }
 

@@ -380,15 +380,15 @@ static bool handle_playing_input(SDL_Surface *screen, PlayerInternalState *state
         ModuleCommon_handleHardwareVolume();
         Player_update();
 
-        // SELECT+A during hint -> full wake
-        if (PAD_isPressed(BTN_SELECT) && PAD_isPressed(BTN_A)) {
+        // Any button during hint -> full wake
+        if (ModuleCommon_isAnyWakeButtonJustPressed()) {
             ModuleCommon_resetScreenOffHint();
             ModuleCommon_recordInputTime();
             *dirty = 1;
             return true;  // skip this frame's input so A doesn't toggle pause
         } else {
             // Any other button resets the hint timer
-            if (PAD_anyPressed()) {
+            if (ModuleCommon_isAnyWakeButtonPressed()) {
                 ModuleCommon_startScreenOffHint();
             }
             if (ModuleCommon_processScreenOffHintTimeout()) {
@@ -408,7 +408,7 @@ static bool handle_playing_input(SDL_Surface *screen, PlayerInternalState *state
         Player_update();
 
         // Any button -> show hint
-        if (PAD_anyPressed()) {
+        if (ModuleCommon_isAnyWakeButtonPressed()) {
             screen_off = false;
             PLAT_enableBacklight(1);
             ModuleCommon_startScreenOffHint();
@@ -434,7 +434,7 @@ static bool handle_playing_input(SDL_Surface *screen, PlayerInternalState *state
     }
 
     // Normal input handling
-    if (PAD_anyPressed()) {
+    if (ModuleCommon_isAnyWakeButtonPressed()) {
         ModuleCommon_recordInputTime();
     }
 
@@ -819,13 +819,13 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
         if (ModuleCommon_isScreenOffHintActive()) {
             handle_hid_events();
             ModuleCommon_handleHardwareVolume();
-            if (PAD_isPressed(BTN_SELECT) && PAD_isPressed(BTN_A)) {
+            if (ModuleCommon_isAnyWakeButtonJustPressed()) {
                 ModuleCommon_resetScreenOffHint();
                 ModuleCommon_recordInputTime();
                 dirty = 1;
                 continue;  // skip this frame's input so A doesn't toggle pause
             } else {
-                if (PAD_anyPressed()) {
+                if (ModuleCommon_isAnyWakeButtonPressed()) {
                     ModuleCommon_startScreenOffHint();
                 }
                 if (ModuleCommon_processScreenOffHintTimeout()) {
@@ -843,7 +843,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
         if (screen_off) {
             bool wake_screen = false;
             
-            if (PAD_anyPressed()) {
+            if (ModuleCommon_isAnyWakeButtonPressed()) {
                 if (Settings_getLockscreenControls() && 
                    (PAD_justPressed(BTN_PLUS) || PAD_justPressed(BTN_MINUS) ||
                     PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_R1) ||
@@ -892,7 +892,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
         }
 
         // Normal input handling
-        if (PAD_anyPressed()) {
+        if (ModuleCommon_isAnyWakeButtonPressed()) {
             ModuleCommon_recordInputTime();
         }
 

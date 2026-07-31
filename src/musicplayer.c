@@ -95,6 +95,10 @@ int main(int argc, char* argv[]) {
     psa_crypto_init();
 
     if (daemon_mode) {
+        if (fork() != 0) {
+            exit(0); // Parent process exits
+        }
+        setsid(); // Create a new session and process group
         signal(SIGINT, SIG_IGN);
         signal(SIGTERM, SIG_IGN);
     } else {

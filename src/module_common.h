@@ -41,6 +41,12 @@ void ModuleCommon_setAutosleepDisabled(bool disabled);
 // Check if screen off hint is active
 bool ModuleCommon_isScreenOffHintActive(void);
 
+// Check if any wake button is currently pressed (excluding volume buttons)
+bool ModuleCommon_isAnyWakeButtonPressed(void);
+
+// Check if any wake button was just pressed (excluding volume buttons)
+bool ModuleCommon_isAnyWakeButtonJustPressed(void);
+
 // Start screen off hint countdown
 void ModuleCommon_startScreenOffHint(void);
 
