@@ -99,8 +99,8 @@ int main(int argc, char* argv[]) {
             exit(0); // Parent process exits
         }
         setsid(); // Create a new session and process group
-        signal(SIGINT, SIG_IGN);
-        signal(SIGTERM, SIG_IGN);
+        signal(SIGINT, sigHandler);
+        signal(SIGTERM, sigHandler);
     } else {
         signal(SIGINT, sigHandler);
         signal(SIGTERM, sigHandler);
