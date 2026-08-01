@@ -1237,7 +1237,7 @@ void PlayerModule_backgroundTick(void) {
     }
 }
 
-void PlayerModule_runDaemon(const ResumeState* resume, bool* quit_flag) {
+void PlayerModule_runDaemon(const ResumeState* resume, volatile sig_atomic_t* quit_flag) {
     if (!resume) return;
 
     if (resume->type == RESUME_TYPE_FILES) {

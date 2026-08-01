@@ -35,7 +35,7 @@
 #include "display_helper.h"
 
 // Global quit flag
-static bool quit = false;
+static volatile sig_atomic_t quit = 0;
 static SDL_Surface* screen;
 
 static void sigHandler(int sig) {

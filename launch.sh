@@ -26,10 +26,8 @@ cat "$CPU_FREQ/cpuinfo_min_freq" > "$CPU_FREQ/scaling_min_freq"
 cat "$CPU_FREQ/cpuinfo_max_freq" > "$CPU_FREQ/scaling_max_freq"
 
 # Kill any previously running background instance
-if pidof musicplayer.elf > /dev/null; then
-	killall musicplayer.elf
-	sleep 0.5
-fi
+killall musicplayer.elf > /dev/null 2>&1
+sleep 0.5
 
 # Run the platform-specific binary and capture exit code
 "$DIR/bin/$PLATFORM/musicplayer.elf" &> "$LOGS_PATH/music-player.txt"
