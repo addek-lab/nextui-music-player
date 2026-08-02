@@ -58,25 +58,28 @@ void render_video_browser(SDL_Surface* screen, int show_setting, BrowserContext*
             } else if (entry->is_play_all) {
                 icon = Icons_getPlayAll(selected);
             } else {
-                icon = Icons_getAudio(selected); // Use clean media icon
+                icon = Icons_getAudio(selected);
             }
             if (icon) {
-                SDL_BlitSurface(icon, NULL, screen, &(SDL_Rect){pos.icon_x, pos.icon_y});
+                int icon_y = y + (layout.item_h - icon_size) / 2;
+                int icon_x = pos.text_x;
+                SDL_Rect src_rect = {0, 0, icon->w, icon->h};
+                SDL_Rect dst_rect = {icon_x, icon_y, icon_size, icon_size};
+                SDL_BlitScaled(icon, &src_rect, screen, &dst_rect);
             }
         }
 
-        if (selected) {
-            ScrollText_update(&video_browser_scroll, display, Fonts_getLarge(),
-                              pos.max_text_w, Fonts_getListTextColor(true),
-                              screen, pos.text_x, pos.text_y, true);
-        } else {
-            SDL_Surface* text = TTF_RenderUTF8_Blended(Fonts_getLarge(), truncated, Fonts_getListTextColor(false));
-            if (text) {
-                SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){pos.text_x, pos.text_y});
-                SDL_FreeSurface(text);
-            }
-        }
+        int text_x = pos.text_x + icon_offset;
+        int available_width = pos.pill_width - SCALE1(BUTTON_PADDING * 2) - icon_offset;
+
+        render_list_item_text(screen, &video_browser_scroll, display, Fonts_getMedium(),
+                              text_x, pos.text_y, available_width, selected);
     }
+
+    render_scroll_indicators(screen, browser->scroll_offset, browser->items_per_page, browser->entry_count);
+
+    GFX_blitButtonGroup((char*[]){"START", "CONTROLS", NULL}, 0, screen, 0);
+    GFX_blitButtonGroup((char*[]){"B", "BACK", "A", "SELECT", NULL}, 1, screen, 1);
 }
 
 static void format_time_str(int seconds, char* buf, size_t buf_size) {
@@ -100,7 +103,6 @@ void render_video_osd(SDL_Surface* screen, const char* title, int current_second
     }
 
     if (!show_hud && !is_paused && seek_offset == 0) {
-        // Hide OSD for immersive full screen video playback
         return;
     }
 
@@ -111,7 +113,7 @@ void render_video_osd(SDL_Surface* screen, const char* title, int current_second
     int bar_pad = SCALE1(12);
     int top_h = SCALE1(36);
     SDL_Rect top_bar = {bar_pad, bar_pad, sw - bar_pad * 2, top_h};
-    GFX_drawPill(screen, &top_bar, (SDL_Color){0, 0, 0, 180}, SCALE1(8));
+    GFX_blitPill(ASSET_BLACK_PILL, screen, &top_bar);
 
     // Render Title
     TTF_Font* font_med = Fonts_getMedium();
@@ -138,7 +140,7 @@ void render_video_osd(SDL_Surface* screen, const char* title, int current_second
             int pill_w = st->w + SCALE1(24);
             int pill_h = st->h + SCALE1(16);
             SDL_Rect seek_rect = {(sw - pill_w) / 2, (sh - pill_h) / 2, pill_w, pill_h};
-            GFX_drawPill(screen, &seek_rect, (SDL_Color){0, 0, 0, 200}, SCALE1(8));
+            GFX_blitPill(ASSET_BLACK_PILL, screen, &seek_rect);
             SDL_BlitSurface(st, NULL, screen, &(SDL_Rect){seek_rect.x + SCALE1(12), seek_rect.y + SCALE1(8)});
             SDL_FreeSurface(st);
         }
@@ -148,7 +150,7 @@ void render_video_osd(SDL_Surface* screen, const char* title, int current_second
             int pill_w = pt->w + SCALE1(24);
             int pill_h = pt->h + SCALE1(16);
             SDL_Rect pause_rect = {(sw - pill_w) / 2, (sh - pill_h) / 2, pill_w, pill_h};
-            GFX_drawPill(screen, &pause_rect, (SDL_Color){0, 0, 0, 200}, SCALE1(8));
+            GFX_blitPill(ASSET_BLACK_PILL, screen, &pause_rect);
             SDL_BlitSurface(pt, NULL, screen, &(SDL_Rect){pause_rect.x + SCALE1(12), pause_rect.y + SCALE1(8)});
             SDL_FreeSurface(pt);
         }
@@ -158,9 +160,8 @@ void render_video_osd(SDL_Surface* screen, const char* title, int current_second
     int bot_h = SCALE1(40);
     int bot_y = sh - bot_h - bar_pad;
     SDL_Rect bot_bar = {bar_pad, bot_y, sw - bar_pad * 2, bot_h};
-    GFX_drawPill(screen, &bot_bar, (SDL_Color){0, 0, 0, 180}, SCALE1(8));
+    GFX_blitPill(ASSET_BLACK_PILL, screen, &bot_bar);
 
-    // Time text strings
     char cur_str[32], dur_str[32];
     format_time_str(current_seconds, cur_str, sizeof(cur_str));
     format_time_str(total_seconds, dur_str, sizeof(dur_str));
@@ -170,28 +171,26 @@ void render_video_osd(SDL_Surface* screen, const char* title, int current_second
     TTF_SizeUTF8(font_sm, cur_str, &cur_w, NULL);
     TTF_SizeUTF8(font_sm, dur_str, &dur_w, NULL);
 
-    // Blit current time
     SDL_Surface* cur_surf = TTF_RenderUTF8_Blended(font_sm, cur_str, COLOR_GRAY);
     if (cur_surf) {
         SDL_BlitSurface(cur_surf, NULL, screen, &(SDL_Rect){bot_bar.x + SCALE1(12), bot_bar.y + (bot_h - cur_surf->h) / 2});
         SDL_FreeSurface(cur_surf);
     }
 
-    // Blit total duration
     SDL_Surface* dur_surf = TTF_RenderUTF8_Blended(font_sm, dur_str, COLOR_GRAY);
     if (dur_surf) {
         SDL_BlitSurface(dur_surf, NULL, screen, &(SDL_Rect){bot_bar.x + bot_bar.w - dur_w - SCALE1(12), bot_bar.y + (bot_h - dur_surf->h) / 2});
         SDL_FreeSurface(dur_surf);
     }
 
-    // Timeline bar between current and total time
+    // Progress line
     int bar_x = bot_bar.x + SCALE1(16) + cur_w + SCALE1(8);
     int bar_max_w = (bot_bar.x + bot_bar.w - dur_w - SCALE1(24)) - bar_x;
     if (bar_max_w > SCALE1(20)) {
         int track_h = SCALE1(4);
         int track_y = bot_bar.y + (bot_h - track_h) / 2;
         SDL_Rect bg_track = {bar_x, track_y, bar_max_w, track_h};
-        GFX_drawPill(screen, &bg_track, (SDL_Color){60, 60, 60, 255}, track_h / 2);
+        SDL_FillRect(screen, &bg_track, SDL_MapRGB(screen->format, 60, 60, 60));
 
         if (total_seconds > 0) {
             float progress = (float)current_seconds / (float)total_seconds;
@@ -200,7 +199,7 @@ void render_video_osd(SDL_Surface* screen, const char* title, int current_second
             int fill_w = (int)(bar_max_w * progress);
             if (fill_w < track_h) fill_w = track_h;
             SDL_Rect fill_track = {bar_x, track_y, fill_w, track_h};
-            GFX_drawPill(screen, &fill_track, (SDL_Color){255, 255, 255, 255}, track_h / 2);
+            SDL_FillRect(screen, &fill_track, SDL_MapRGB(screen->format, 255, 255, 255));
         }
     }
 }
@@ -211,7 +210,6 @@ void render_video_lockscreen(SDL_Surface* screen) {
     int sw = screen->w;
     int sh = screen->h;
 
-    // Dark minimalist lock screen
     time_t now = time(NULL);
     struct tm* tm = localtime(&now);
     char time_buf[16];
