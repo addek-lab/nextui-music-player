@@ -23,6 +23,7 @@
 #include "module_common.h"
 #include "module_menu.h"
 #include "module_library.h"
+#include "module_video.h"
 #include "module_player.h"
 #include "module_radio.h"
 #include "module_podcast.h"
@@ -187,6 +188,9 @@ int main(int argc, char* argv[]) {
             }
             case MENU_LIBRARY:
                 reason = LibraryModule_run(screen);
+                break;
+            case MENU_VIDEOS:
+                reason = VideoModule_run(screen);
                 break;
             case MENU_RADIO:
                 reason = RadioModule_run(screen);

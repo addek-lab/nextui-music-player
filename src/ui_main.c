@@ -15,8 +15,8 @@
 #include <time.h>
 
 // Menu items variants (first entry is mutable for Resume/Now Playing swap)
-static const char* menu_items_with_first[] = {"Resume", "Library", "Online Radio", "Podcasts", "Settings"};
-static const char* menu_items_no_first[] = {"Library", "Online Radio", "Podcasts", "Settings"};
+static const char* menu_items_with_first[] = {"Resume", "Library", "Videos", "Online Radio", "Podcasts", "Settings"};
+static const char* menu_items_no_first[] = {"Library", "Videos", "Online Radio", "Podcasts", "Settings"};
 
 // Cached first_item_mode for callbacks
 static int current_first_item_mode = MENU_FIRST_NONE;
@@ -128,7 +128,7 @@ void render_menu(SDL_Surface* screen, int show_setting, int menu_selected,
     }
 
     const char** items = has_first ? menu_items_with_first : menu_items_no_first;
-    int count = has_first ? 5 : 4;
+    int count = has_first ? 6 : 5;
 
     SimpleMenuConfig config = {
         .title = "Music Player",
