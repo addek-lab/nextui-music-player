@@ -368,8 +368,8 @@ void ModuleCommon_updateSleepTimer(void) {
         // Stop audio playback (this also saves resume state)
         Background_stopAll();
         
-        // Put device into deep sleep / suspend
-        system("sync; echo mem > /sys/power/state");
+        // Full shutdown of the device
+        system("sync; poweroff");
     }
 }
 
