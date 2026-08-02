@@ -125,8 +125,44 @@ static void video_browser_load(BrowserContext* ctx, const char* path) {
     ctx->entry_count = idx;
 }
 
-// Play single video file
+// Play single video file with hardware video player (Full on-screen video + audio)
 static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepath) {
+    if (!filepath) return MODULE_EXIT_TO_MENU;
+
+    // Stop internal audio engine to free audio device
+    Player_stop();
+
+    // Clear display to black before launching player
+    GFX_clear(screen);
+    GFX_flip(screen);
+
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd),
+        "echo 1 > /tmp/stay_awake; "
+        "if [ -f /usr/trimui/apps/player/launch.sh ]; then "
+        "  chmod +x /usr/trimui/apps/player/launch.sh; "
+        "  /usr/trimui/apps/player/launch.sh \"%s\"; "
+        "elif [ -f /usr/trimui/apps/player/player ]; then "
+        "  chmod +x /usr/trimui/apps/player/player; "
+        "  /usr/trimui/apps/player/player \"%s\"; "
+        "elif [ -f /usr/trimui/apps/player/bin/player ]; then "
+        "  chmod +x /usr/trimui/apps/player/bin/player; "
+        "  /usr/trimui/apps/player/bin/player \"%s\"; "
+        "fi; "
+        "rm -f /tmp/stay_awake",
+        filepath, filepath, filepath);
+
+    system(cmd);
+
+    // Re-clear screen after player exits
+    GFX_clear(screen);
+    GFX_flip(screen);
+
+    return MODULE_EXIT_TO_MENU;
+}
+
+// Play audio-only stream with Lock Screen support
+static ModuleExitReason play_video_audio_only(SDL_Surface* screen, const char* filepath) {
     if (!filepath) return MODULE_EXIT_TO_MENU;
 
     // Extract title from filename
@@ -140,7 +176,7 @@ static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepat
 
     // Start playing audio/media stream via Player
     if (Player_load(filepath) != 0 || Player_play() != 0) {
-        VideoModule_setToast("Failed to open video");
+        VideoModule_setToast("Failed to open audio");
         return MODULE_EXIT_TO_MENU;
     }
 
@@ -351,6 +387,22 @@ ModuleExitReason VideoModule_run(SDL_Surface* screen) {
                     char video_path[1024];
                     snprintf(video_path, sizeof(video_path), "%s/%s", browser.current_path, ent->name);
                     ModuleExitReason r = play_video_file(screen, video_path);
+                    if (r == MODULE_EXIT_QUIT) {
+                        Browser_freeEntries(&browser);
+                        return MODULE_EXIT_QUIT;
+                    }
+                    dirty = 1;
+                }
+            }
+        }
+        else if (PAD_justPressed(BTN_X)) {
+            if (browser.entry_count > 0 && browser.selected < browser.entry_count) {
+                FileEntry* ent = &browser.entries[browser.selected];
+                if (!ent->is_dir) {
+                    // Play audio-only with Lock Screen
+                    char video_path[1024];
+                    snprintf(video_path, sizeof(video_path), "%s/%s", browser.current_path, ent->name);
+                    ModuleExitReason r = play_video_audio_only(screen, video_path);
                     if (r == MODULE_EXIT_QUIT) {
                         Browser_freeEntries(&browser);
                         return MODULE_EXIT_QUIT;

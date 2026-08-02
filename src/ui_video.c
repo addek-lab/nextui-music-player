@@ -79,7 +79,7 @@ void render_video_browser(SDL_Surface* screen, int show_setting, BrowserContext*
     render_scroll_indicators(screen, browser->scroll_offset, browser->items_per_page, browser->entry_count);
 
     GFX_blitButtonGroup((char*[]){"START", "CONTROLS", NULL}, 0, screen, 0);
-    GFX_blitButtonGroup((char*[]){"B", "BACK", "A", "SELECT", NULL}, 1, screen, 1);
+    GFX_blitButtonGroup((char*[]){"B", "BACK", "X", "AUDIO ONLY", "A", "PLAY", NULL}, 1, screen, 1);
 }
 
 static void format_time_str(int seconds, char* buf, size_t buf_size) {
