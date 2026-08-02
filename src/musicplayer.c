@@ -50,61 +50,65 @@ static void sigHandler(int sig) {
 }
 
 int main(int argc, char* argv[]) {
-    bool daemon_mode = false;
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--daemon") == 0) daemon_mode = true;
-    }
+    (void)argc;
+    (void)argv;
 
-    if (!daemon_mode) {
-        screen = GFX_init(MODE_MAIN);
-        // Load bundled fonts
-        Fonts_load();
+    screen = GFX_init(MODE_MAIN);
+    // Load bundled fonts
+    Fonts_load();
 
     // Show splash screen immediately while heavy subsystems initialize
     {
         GFX_clear(screen);
         SDL_Surface* title = TTF_RenderUTF8_Blended(Fonts_getTitle(), "Music Player", COLOR_WHITE);
+        SDL_Surface* sub = TTF_RenderUTF8_Blended(Fonts_getSmall(), "by Addek-Labs", COLOR_GRAY);
+        SDL_Surface* loading = TTF_RenderUTF8_Blended(Fonts_getSmall(), "Loading...", COLOR_GRAY);
+
+        int title_h = title ? title->h : 0;
+        int sub_h = sub ? sub->h : 0;
+        int load_h = loading ? loading->h : 0;
+        int gap1 = SCALE1(2);
+        int gap2 = SCALE1(12);
+        int total_h = title_h + gap1 + sub_h + gap2 + load_h;
+        int cur_y = (screen->h - total_h) / 2;
+
         if (title) {
             SDL_BlitSurface(title, NULL, screen, &(SDL_Rect){
                 (screen->w - title->w) / 2,
-                screen->h / 2 - title->h
+                cur_y
             });
+            cur_y += title_h + gap1;
             SDL_FreeSurface(title);
         }
-        SDL_Surface* loading = TTF_RenderUTF8_Blended(Fonts_getSmall(), "Loading...", COLOR_GRAY);
+        if (sub) {
+            SDL_BlitSurface(sub, NULL, screen, &(SDL_Rect){
+                (screen->w - sub->w) / 2,
+                cur_y
+            });
+            cur_y += sub_h + gap2;
+            SDL_FreeSurface(sub);
+        }
         if (loading) {
             SDL_BlitSurface(loading, NULL, screen, &(SDL_Rect){
                 (screen->w - loading->w) / 2,
-                screen->h / 2 + SCALE1(4)
+                cur_y
             });
             SDL_FreeSurface(loading);
         }
         GFX_flip(screen);
     }
-    }
 
     PWR_pinToCores(CPU_CORE_PERFORMANCE);
 
     InitSettings();
-    if (!daemon_mode) {
-        PAD_init();
-        Icons_init();
-    }
+    PAD_init();
+    Icons_init();
     PWR_init();
     WIFI_init();
     psa_crypto_init();
 
-    if (daemon_mode) {
-        if (fork() != 0) {
-            exit(0); // Parent process exits
-        }
-        setsid(); // Create a new session and process group
-        signal(SIGINT, sigHandler);
-        signal(SIGTERM, sigHandler);
-    } else {
-        signal(SIGINT, sigHandler);
-        signal(SIGTERM, sigHandler);
-    }
+    signal(SIGINT, sigHandler);
+    signal(SIGTERM, sigHandler);
 
     // Seed random number generator for shuffle
     srand((unsigned int)time(NULL));
@@ -130,12 +134,6 @@ int main(int argc, char* argv[]) {
 	// Restore hardware volume after audio device is open and stable
 	SetVolume(GetVolume());
 
-    // Initialize self-update module
-    if (!daemon_mode) {
-        SelfUpdate_init(".");
-        SelfUpdate_checkForUpdate();
-    }
-
     // Initialize common module (global input handling)
     ModuleCommon_init();
 
@@ -146,17 +144,7 @@ int main(int argc, char* argv[]) {
     Resume_init();
 
     // Initialize YouTube downloader
-    if (!daemon_mode) {
-        Downloader_init();
-    }
-
-    if (daemon_mode) {
-        const ResumeState* rs = Resume_getState();
-        if (rs) {
-            PlayerModule_runDaemon(rs, &quit);
-        }
-        goto cleanup;
-    }
+    Downloader_init();
 
     // Main application loop
     while (!quit) {
@@ -224,29 +212,18 @@ int main(int argc, char* argv[]) {
 
 cleanup:
     ; // Empty statement for label
-    // Determine exit code before Background_stopAll clears the playing state
-    int exit_code = EXIT_SUCCESS;
-    if (!daemon_mode && quit && Settings_getMinimizeOnExit() && Background_isPlaying()) {
-        exit_code = 42;
-    }
-
     Background_stopAll();
-    if (!daemon_mode) Downloader_cleanup();
+    Downloader_cleanup();
     Settings_quit();
     ModuleCommon_quit();
-    if (!daemon_mode) SelfUpdate_cleanup();
     Player_quit();
-    if (!daemon_mode) {
-        Icons_quit();
-        Fonts_unload();
-    }
+    Icons_quit();
+    Fonts_unload();
 
     QuitSettings();
     PWR_quit();
-    if (!daemon_mode) {
-        PAD_quit();
-        GFX_quit();
-    }
+    PAD_quit();
+    GFX_quit();
 
-    return exit_code;
+    return EXIT_SUCCESS;
 }

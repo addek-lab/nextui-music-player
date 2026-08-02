@@ -31,7 +31,6 @@ static struct {
     int bass_filter_hz;      // 0=off, 80, 100, 120, 150, 200
     int soft_limiter_index;  // 0=off, 1=mild, 2=medium, 3=strong
     bool lockscreen_controls;// true = allow vol/skip when screen off
-    bool minimize_on_exit;   // true = minimize to background on quit
 } current_settings;
 
 // Sleep timer (runtime only, not saved)
@@ -67,7 +66,6 @@ void Settings_init(void) {
     current_settings.bass_filter_hz = bass_filter_values[DEFAULT_BASS_FILTER_INDEX];
     current_settings.soft_limiter_index = DEFAULT_SOFT_LIMITER_INDEX;
     current_settings.lockscreen_controls = true;
-    current_settings.minimize_on_exit = true;
 
     // Try to load from file
     FILE* f = fopen(SETTINGS_FILE, "r");
@@ -103,9 +101,6 @@ void Settings_init(void) {
         }
         if (sscanf(line, "lockscreen_controls=%d", &value) == 1) {
             current_settings.lockscreen_controls = (value != 0);
-        }
-        if (sscanf(line, "minimize_on_exit=%d", &value) == 1) {
-            current_settings.minimize_on_exit = (value != 0);
         }
     }
     fclose(f);
@@ -164,15 +159,6 @@ void Settings_toggleLockscreenControls(void) {
     Settings_save();
 }
 
-bool Settings_getMinimizeOnExit(void) {
-    return current_settings.minimize_on_exit;
-}
-
-void Settings_toggleMinimizeOnExit(void) {
-    current_settings.minimize_on_exit = !current_settings.minimize_on_exit;
-    Settings_save();
-}
-
 void Settings_save(void) {
     // Ensure directory exists
     char mkdir_cmd[512];
@@ -187,7 +173,6 @@ void Settings_save(void) {
     fprintf(f, "bass_filter_hz=%d\n", current_settings.bass_filter_hz);
     fprintf(f, "soft_limiter=%d\n", current_settings.soft_limiter_index);
     fprintf(f, "lockscreen_controls=%d\n", current_settings.lockscreen_controls ? 1 : 0);
-    fprintf(f, "minimize_on_exit=%d\n", current_settings.minimize_on_exit ? 1 : 0);
     fclose(f);
 }
 

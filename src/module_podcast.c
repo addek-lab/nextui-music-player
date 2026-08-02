@@ -913,7 +913,7 @@ ModuleExitReason PodcastModule_run(SDL_Surface* screen) {
                 ModuleCommon_handleHardwareVolume();
                 Podcast_update();
 
-                if (ModuleCommon_isAnyWakeButtonJustPressed()) {
+                if (PAD_justPressed(BTN_A)) {
                     ModuleCommon_resetScreenOffHint();
                     ModuleCommon_recordInputTime();
                     dirty = 1;

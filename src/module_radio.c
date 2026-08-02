@@ -276,7 +276,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
                 ModuleCommon_handleHardwareVolume();
                 Radio_update();
 
-                if (ModuleCommon_isAnyWakeButtonJustPressed()) {
+                if (PAD_justPressed(BTN_A)) {
                     ModuleCommon_resetScreenOffHint();
                     ModuleCommon_recordInputTime();
                     dirty = 1;

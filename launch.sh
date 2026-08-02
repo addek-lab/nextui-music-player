@@ -25,15 +25,5 @@ echo conservative > "$CPU_FREQ/scaling_governor"
 cat "$CPU_FREQ/cpuinfo_min_freq" > "$CPU_FREQ/scaling_min_freq"
 cat "$CPU_FREQ/cpuinfo_max_freq" > "$CPU_FREQ/scaling_max_freq"
 
-# Kill any previously running background instance
-killall musicplayer.elf > /dev/null 2>&1
-sleep 0.5
-
-# Run the platform-specific binary and capture exit code
+# Run the platform-specific binary
 "$DIR/bin/$PLATFORM/musicplayer.elf" &> "$LOGS_PATH/music-player.txt"
-EXIT_CODE=$?
-
-# If user selected Minimize to Background (exit code 42)
-if [ $EXIT_CODE -eq 42 ]; then
-	"$DIR/bin/$PLATFORM/musicplayer.elf" --daemon > /dev/null 2>&1 &
-fi

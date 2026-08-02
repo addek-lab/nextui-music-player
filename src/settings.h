@@ -43,9 +43,6 @@ void Settings_toggleLyrics(void);
 bool Settings_getLockscreenControls(void);
 void Settings_toggleLockscreenControls(void);
 
-// Minimize on exit setting
-bool Settings_getMinimizeOnExit(void);
-void Settings_toggleMinimizeOnExit(void);
 
 // Speaker bass filter (high-pass cutoff in Hz, 0 = off)
 int Settings_getBassFilterHz(void);

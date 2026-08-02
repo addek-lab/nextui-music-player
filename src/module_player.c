@@ -380,8 +380,8 @@ static bool handle_playing_input(SDL_Surface *screen, PlayerInternalState *state
         ModuleCommon_handleHardwareVolume();
         Player_update();
 
-        // Any button during hint -> full wake
-        if (ModuleCommon_isAnyWakeButtonJustPressed()) {
+        // Only A button during hint -> full wake
+        if (PAD_justPressed(BTN_A)) {
             ModuleCommon_resetScreenOffHint();
             ModuleCommon_recordInputTime();
             *dirty = 1;
@@ -819,7 +819,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
         if (ModuleCommon_isScreenOffHintActive()) {
             handle_hid_events();
             ModuleCommon_handleHardwareVolume();
-            if (ModuleCommon_isAnyWakeButtonJustPressed()) {
+            if (PAD_justPressed(BTN_A)) {
                 ModuleCommon_resetScreenOffHint();
                 ModuleCommon_recordInputTime();
                 dirty = 1;
@@ -1237,75 +1237,3 @@ void PlayerModule_backgroundTick(void) {
     }
 }
 
-void PlayerModule_runDaemon(const ResumeState* resume, volatile sig_atomic_t* quit_flag) {
-    if (!resume) return;
-
-    if (resume->type == RESUME_TYPE_FILES) {
-        init_player();
-        load_directory(resume->folder_path);
-        nav_stack_top = 0;
-
-        Playlist_free(&playlist);
-        int count = Playlist_buildFromDirectory(&playlist, resume->folder_path, resume->track_path);
-        if (count <= 0) return;
-        playlist_active = true;
-
-        const PlaylistTrack* track = Playlist_getCurrentTrack(&playlist);
-        if (!track || !start_playback(track->path)) {
-            cleanup_playback(false);
-            return;
-        }
-
-    } else if (resume->type == RESUME_TYPE_PLAYLIST) {
-        PlaylistTrack m3u_tracks[PLAYLIST_MAX_TRACKS];
-        int m3u_count = 0;
-        if (M3U_loadTracks(resume->playlist_path, m3u_tracks, PLAYLIST_MAX_TRACKS, &m3u_count) != 0 || m3u_count <= 0) {
-            return;
-        }
-
-        init_player();
-        Playlist_free(&playlist);
-
-        playlist.tracks = (PlaylistTrack*)malloc(m3u_count * sizeof(PlaylistTrack));
-        if (playlist.tracks) {
-            memcpy(playlist.tracks, m3u_tracks, m3u_count * sizeof(PlaylistTrack));
-            playlist.track_count = m3u_count;
-        }
-
-        playlist_active = true;
-        int start_idx = 0;
-        for (int i = 0; i < m3u_count; i++) {
-            if (strcmp(m3u_tracks[i].path, resume->track_path) == 0) {
-                start_idx = i;
-                break;
-            }
-        }
-        Playlist_setCurrentIndex(&playlist, start_idx);
-
-        const PlaylistTrack* track = Playlist_getCurrentTrack(&playlist);
-        if (!track || !start_playback(track->path)) {
-            cleanup_playback(false);
-            return;
-        }
-
-        PlayerModule_setResumePlaylistPath(resume->playlist_path);
-    } else {
-        return;
-    }
-
-    if (resume->position_ms > 0) {
-        Player_seek(resume->position_ms);
-    }
-
-    Background_setActive(BG_MUSIC);
-    
-    while (quit_flag && !(*quit_flag)) {
-        PlayerModule_backgroundTick();
-        ModuleCommon_updateSleepTimer();
-        usleep(100000); // 100ms
-        
-        if (Player_getState() == PLAYER_STATE_STOPPED && Background_getActive() == BG_NONE) {
-            break;
-        }
-    }
-}

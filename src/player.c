@@ -1134,6 +1134,13 @@ static size_t resample_chunk(int16_t* input, size_t input_frames,
     src_data.src_ratio = ratio;
     src_data.end_of_input = is_last ? 1 : 0;
 
+    if (!src_state) {
+        LOG_error("Resample chunk failed: null resampler state\n");
+        free(float_in);
+        free(float_out);
+        return 0;
+    }
+
     int error = src_process(src_state, &src_data);
     if (error) {
         LOG_error("Resample chunk failed: %s\n", src_strerror(error));
@@ -1241,6 +1248,11 @@ static void* stream_thread_func(void* arg) {
                     output_frames = decoded;
                     circular_buffer_write(&player.stream_buffer, decode_buffer, output_frames);
                 } else {
+                    // Ensure resampler is initialized
+                    if (!player.resampler) {
+                        int err;
+                        player.resampler = src_new(SRC_SINC_FASTEST, AUDIO_CHANNELS, &err);
+                    }
                     // Resample
                     output_frames = resample_chunk(decode_buffer, decoded,
                                                    src_rate, dst_rate,
@@ -1602,6 +1614,11 @@ static void reopen_audio_device(void) {
         if (bass_hz > 0) speaker_hpf_init(current_sample_rate, (float)bass_hz);
     }
 
+    if (player.resampler) {
+        src_reset((SRC_STATE*)player.resampler);
+    }
+    player.resample_leftover_count = 0;
+
     // Resume playback if it was playing
     if (prev_state == PLAYER_STATE_PLAYING) {
         SDL_PauseAudioDevice(player.audio_device, 0);
@@ -1664,6 +1681,15 @@ static void audio_device_change_callback(int device_type, int event) {
     } else if (was_usbdac && !usbdac_audio_active && !bluetooth_audio_active) {
         // USB DAC disconnected and no Bluetooth, close HID
         Player_quitUSBHID();
+    }
+
+    // Sync volume when audio device changes
+    if (bluetooth_audio_active || usbdac_audio_active) {
+        float v = GetVolume() / 20.0f;
+        Player_setVolume(v * v * v);
+    } else {
+        Player_setVolume(1.0f);
+        SetVolume(GetVolume());
     }
 
     reopen_audio_device();
@@ -2127,19 +2153,17 @@ static int load_streaming(const char* filepath) {
         return -1;
     }
 
-    // Initialize resampler for streaming
+    // Initialize resampler for streaming (create resampler so dynamic rate changes work safely)
     int src_rate = player.stream_decoder.source_sample_rate;
     int dst_rate = get_target_sample_rate();
 
-    if (src_rate != dst_rate) {
-        int error;
-        player.resampler = src_new(SRC_SINC_FASTEST, AUDIO_CHANNELS, &error);
-        if (!player.resampler) {
-            LOG_error("Stream: Failed to create resampler: %s\n", src_strerror(error));
-            circular_buffer_free(&player.stream_buffer);
-            stream_decoder_close(&player.stream_decoder);
-            return -1;
-        }
+    int error;
+    player.resampler = src_new(SRC_SINC_FASTEST, AUDIO_CHANNELS, &error);
+    if (!player.resampler) {
+        LOG_error("Stream: Failed to create resampler: %s\n", src_strerror(error));
+        circular_buffer_free(&player.stream_buffer);
+        stream_decoder_close(&player.stream_decoder);
+        return -1;
     }
 
     // Set track info
@@ -2473,7 +2497,7 @@ static int find_audio_hid_device(char* event_path, size_t path_size, bool find_b
             is_bluetooth_avrcp = false;
             has_kbd = false;
             // Check if Bluetooth AVRCP device
-            if (strstr(name, "AVRCP")) {
+            if (strstr(name, "AVRCP") || strstr(name, "avrcp") || strstr(name, "Bluetooth") || strstr(name, "bluez") || strstr(name, "BlueZ")) {
                 is_bluetooth_avrcp = true;
             }
         }
@@ -2493,9 +2517,9 @@ static int find_audio_hid_device(char* event_path, size_t path_size, bool find_b
         else if (line[0] == '\n') {
             // End of device entry
             bool match = false;
-            if (find_bluetooth && is_bluetooth_avrcp && has_kbd) {
+            if (find_bluetooth && is_bluetooth_avrcp) {
                 match = true;
-            } else if (!find_bluetooth && is_usb && has_kbd) {
+            } else if (!find_bluetooth && is_usb && (has_kbd || strstr(name, "Audio") || strstr(name, "Headset") || strstr(name, "Headphone"))) {
                 match = true;
             }
 
@@ -2550,7 +2574,17 @@ void Player_initUSBHID(void) {
 
 USBHIDEvent Player_pollUSBHID(void) {
     if (usb_hid_fd < 0) {
-        return USB_HID_EVENT_NONE;
+        if (bluetooth_audio_active || usbdac_audio_active) {
+            static uint32_t last_hid_retry = 0;
+            uint32_t now = SDL_GetTicks();
+            if (now - last_hid_retry > 2000) {
+                last_hid_retry = now;
+                Player_initUSBHID();
+            }
+        }
+        if (usb_hid_fd < 0) {
+            return USB_HID_EVENT_NONE;
+        }
     }
 
     struct input_event_raw ev;
