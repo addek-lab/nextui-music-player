@@ -127,7 +127,7 @@ static void video_browser_load(BrowserContext* ctx, const char* path) {
 
 // Play single video file
 static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepath) {
-    if (!filepath) return MODULE_EXIT_BACK;
+    if (!filepath) return MODULE_EXIT_TO_MENU;
 
     // Extract title from filename
     char title[256];
@@ -139,9 +139,9 @@ static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepat
     if (dot) *dot = '\0';
 
     // Start playing audio/media stream via Player
-    if (Player_playFile(filepath) != 0) {
+    if (Player_load(filepath) != 0 || Player_play() != 0) {
         VideoModule_setToast("Failed to open video");
-        return MODULE_EXIT_BACK;
+        return MODULE_EXIT_TO_MENU;
     }
 
     bool is_paused = false;
@@ -189,7 +189,7 @@ static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepat
             else if (PAD_justPressed(BTN_A)) {
                 // Play / Pause
                 if (is_paused) {
-                    Player_resume();
+                    Player_play();
                     is_paused = false;
                 } else {
                     Player_pause();
@@ -202,17 +202,17 @@ static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepat
             else if (PAD_justPressed(BTN_B)) {
                 // Exit video
                 Player_stop();
-                return MODULE_EXIT_BACK;
+                return MODULE_EXIT_TO_MENU;
             }
             else if (PAD_justRepeated(BTN_LEFT) || PAD_justRepeated(BTN_RIGHT)) {
                 // Seek ±10 seconds
                 int seek_dir = PAD_justRepeated(BTN_RIGHT) ? 10 : -10;
-                int cur_pos = Player_getPosition();
-                int dur = Player_getDuration();
+                int cur_pos = Player_getPosition() / 1000;
+                int dur = Player_getDuration() / 1000;
                 int new_pos = cur_pos + seek_dir;
                 if (new_pos < 0) new_pos = 0;
                 if (dur > 0 && new_pos > dur) new_pos = dur;
-                Player_seek(new_pos);
+                Player_seek(new_pos * 1000);
                 seek_feedback = seek_dir;
                 seek_feedback_time = SDL_GetTicks();
                 show_hud = true;
@@ -222,12 +222,12 @@ static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepat
             else if (PAD_justPressed(BTN_L1) || PAD_justPressed(BTN_R1)) {
                 // Seek ±60 seconds
                 int seek_dir = PAD_justPressed(BTN_R1) ? 60 : -60;
-                int cur_pos = Player_getPosition();
-                int dur = Player_getDuration();
+                int cur_pos = Player_getPosition() / 1000;
+                int dur = Player_getDuration() / 1000;
                 int new_pos = cur_pos + seek_dir;
                 if (new_pos < 0) new_pos = 0;
                 if (dur > 0 && new_pos > dur) new_pos = dur;
-                Player_seek(new_pos);
+                Player_seek(new_pos * 1000);
                 seek_feedback = seek_dir;
                 seek_feedback_time = SDL_GetTicks();
                 show_hud = true;
@@ -248,9 +248,9 @@ static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepat
         }
 
         // Check if playback reached the end
-        if (Player_isFinished()) {
+        if (Player_getState() == PLAYER_STATE_STOPPED) {
             Player_stop();
-            return MODULE_EXIT_BACK;
+            return MODULE_EXIT_TO_MENU;
         }
 
         // Power management
@@ -260,8 +260,8 @@ static ModuleExitReason play_video_file(SDL_Surface* screen, const char* filepat
         if (dirty || show_hud || is_paused || is_locked) {
             GFX_clear(screen);
 
-            int cur_sec = Player_getPosition();
-            int dur_sec = Player_getDuration();
+            int cur_sec = Player_getPosition() / 1000;
+            int dur_sec = Player_getDuration() / 1000;
 
             render_video_osd(screen, title, cur_sec, dur_sec, is_paused, is_locked,
                              show_setting, seek_feedback, show_hud);
